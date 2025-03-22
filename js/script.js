@@ -1,3 +1,9 @@
+const todos = [];
+const RENDER_EVENT = 'render-todo';
+const STORAGE_KEY = 'TODO_APPS';
+const SAVED_EVENT = 'saved-todo';
+
+
 document.addEventListener('DOMContentLoaded', function () {
     const submitForm = document.getElementById('form');
     submitForm.addEventListener('submit', function (event) {
@@ -15,10 +21,9 @@ function addTodo() {
     todos.push(todoObject);
    
     document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData();
 }
 
-const todos = [];
-const RENDER_EVENT = 'render-todo';
 
 function generateId() {
     return +new Date();
@@ -114,6 +119,7 @@ function addTaskToCompleted (todoId) {
  
   todoTarget.isCompleted = true;
   document.dispatchEvent(new Event(RENDER_EVENT));
+  saveData();
 }
 
 function findTodo(todoId) {
@@ -132,6 +138,7 @@ function removeTaskFromCompleted(todoId) {
  
   todos.splice(todoTarget, 1);
   document.dispatchEvent(new Event(RENDER_EVENT));
+  saveData();
 }
  
  
@@ -142,6 +149,7 @@ function undoTaskFromCompleted(todoId) {
  
   todoTarget.isCompleted = false;
   document.dispatchEvent(new Event(RENDER_EVENT));
+  saveData();
 }
 
 function findTodoIndex(todoId) {
@@ -153,3 +161,43 @@ function findTodoIndex(todoId) {
  
   return -1;
 }
+
+function saveData() {
+  if (isStorageExist()) {
+    const parsed = JSON.stringify(todos);
+    localStorage.setItem(STORAGE_KEY, parsed);
+    document.dispatchEvent(new Event(SAVED_EVENT));
+  }
+}
+
+function isStorageExist() {
+  if (typeof(Storage) === undefined) {
+    alert('Browser kamu tidak mendukung local storage');
+    return false
+  }
+  return true;
+}
+
+document.addEventListener(SAVED_EVENT, function () {
+  alert(localStorage.getItem(STORAGE_KEY));
+});
+
+function loadDataFromStorage() {
+  const serializedData = localStorage.getItem(STORAGE_KEY);
+  let data = JSON.parse(serializedData);
+ 
+  if (data !== null) {
+    for (const todo of data) {
+      todos.push(todo);
+    }
+  }
+ 
+  document.dispatchEvent(new Event(RENDER_EVENT));
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  // ...
+  if (isStorageExist()) {
+    loadDataFromStorage();
+  }
+});
